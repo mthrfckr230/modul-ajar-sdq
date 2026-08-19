@@ -1,11 +1,9 @@
 {
-  "projectId": "learned-octane-s8chg",
-  "appId": "1:720188739300:web:bd9368e8c8f2d4bcd3a6f1",
-  "apiKey": "AIzaSyBWapeudX5CnyAWE0XnS4gtGS2P1pU8LuQ",
-  "authDomain": "learned-octane-s8chg.firebaseapp.com",
-  "storageBucket": "learned-octane-s8chg.firebasestorage.app",
-  "messagingSenderId": "720188739300",
-  "measurementId": "",
-  "oAuthClientId": "720188739300-89g4ekemvvdltvs47j05kdj57eqol8c0.apps.googleusercontent.com",
-  "recaptchaSiteKey": ""
+  "projectId": "modul-ajar-sdq",
+  "appId": "1:682382739252:web:570fb9c55428b503a7c761",
+  "apiKey": "AIzaSyBQNYRZU2ZIN56VtbCYITeT-SVTzClGQBo",
+  "authDomain": "modul-ajar-sdq.firebaseapp.com",
+  "storageBucket": "modul-ajar-sdq.firebasestorage.app",
+  "messagingSenderId": "682382739252",
+  "measurementId": "G-LE035YCKRQ"
 }
