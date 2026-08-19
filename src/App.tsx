@@ -39,9 +39,13 @@ export function App() {
         setUser(authUser);
         setHasGoogleToken(!!token);
       },
-      () => {
+      (error) => {
         setUser(null);
         setHasGoogleToken(false);
+        if (error) {
+          const authError = error as { code?: string; message?: string };
+          setAuthError(`[${authError.code || ''}] ${authError.message || 'Gagal menyelesaikan login Google.'}`);
+        }
       }
     );
     return () => unsubscribe();

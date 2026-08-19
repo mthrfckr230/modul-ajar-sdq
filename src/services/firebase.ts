@@ -2,12 +2,16 @@ import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider, 
   onAuthStateChanged, 
   User,
+  UserCredential,
   signOut 
 } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
+import { runPopupWithRedirectFallback } from './authFlow';
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
@@ -24,15 +28,44 @@ SCOPES.forEach(scope => provider.addScope(scope));
 let activeSignInPromise: Promise<{ user: User; accessToken: string } | null> | null = null;
 let cachedAccessToken: string | null = null;
 
+const readGoogleCredential = (result: UserCredential) => {
+  const credential = GoogleAuthProvider.credentialFromResult(result);
+  if (!credential?.accessToken) {
+    throw new Error('Failed to get access token from Firebase Auth');
+  }
+  cachedAccessToken = credential.accessToken;
+  return { user: result.user, accessToken: cachedAccessToken };
+};
+
 export const initAuth = (
   onAuthSuccess?: (user: User, token: string) => void,
-  onAuthFailure?: () => void
+  onAuthFailure?: (error?: unknown) => void
 ) => {
-  return onAuthStateChanged(auth, async (user: User | null) => {
+  let resolvingRedirect = true;
+  let disposed = false;
+
+  void getRedirectResult(auth)
+    .then((result) => {
+      if (!result || disposed) return;
+      const authResult = readGoogleCredential(result);
+      if (onAuthSuccess) onAuthSuccess(authResult.user, authResult.accessToken);
+    })
+    .catch((error) => {
+      console.error('Redirect sign-in error:', error);
+      if (!disposed && onAuthFailure) onAuthFailure(error);
+    })
+    .finally(() => {
+      resolvingRedirect = false;
+      if (!disposed && auth.currentUser && !cachedAccessToken && !activeSignInPromise) {
+        if (onAuthFailure) onAuthFailure();
+      }
+    });
+
+  const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
     if (user) {
       if (cachedAccessToken) {
         if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
-      } else if (!activeSignInPromise) {
+      } else if (!activeSignInPromise && !resolvingRedirect) {
         // Cached token might need refresh upon page reload via re-login prompt
         if (onAuthFailure) onAuthFailure();
       }
@@ -41,6 +74,11 @@ export const initAuth = (
       if (onAuthFailure) onAuthFailure();
     }
   });
+
+  return () => {
+    disposed = true;
+    unsubscribe();
+  };
 };
 
 export const googleSignIn = async (): Promise<{ user: User; accessToken: string } | null> => {
@@ -50,14 +88,12 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
 
   activeSignInPromise = (async () => {
     try {
-      const result = await signInWithPopup(auth, provider);
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      if (!credential?.accessToken) {
-        throw new Error('Failed to get access token from Firebase Auth');
-      }
-
-      cachedAccessToken = credential.accessToken;
-      return { user: result.user, accessToken: cachedAccessToken };
+      const result = await runPopupWithRedirectFallback(
+        () => signInWithPopup(auth, provider),
+        () => signInWithRedirect(auth, provider),
+      );
+      if (!result) return null;
+      return readGoogleCredential(result);
     } catch (error: any) {
       if (
         error?.code === 'auth/cancelled-popup-request' ||
