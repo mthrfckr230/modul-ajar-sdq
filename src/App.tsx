@@ -31,6 +31,7 @@ export function App() {
   const [user, setUser] = useState<User | null>(null);
   const [hasGoogleToken, setHasGoogleToken] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = initAuth(
@@ -49,6 +50,7 @@ export function App() {
   const handleLogin = async () => {
     if (isLoggingIn) return;
     setIsLoggingIn(true);
+    setAuthError(null);
     try {
       const res = await googleSignIn();
       if (res) {
@@ -61,6 +63,9 @@ export function App() {
         err?.code !== 'auth/popup-closed-by-user'
       ) {
         console.error('Login failed:', err);
+        const code = err?.code || '';
+        const msg = err?.message || 'Gagal login dengan Google.';
+        setAuthError(`[${code}] ${msg}`);
       }
     } finally {
       setIsLoggingIn(false);
@@ -102,6 +107,23 @@ export function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {authError && (
+          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-start justify-between gap-3 text-rose-800 text-sm">
+            <div className="flex items-start gap-3">
+              <span className="text-xl">⚠️</span>
+              <div>
+                <p className="font-bold">Gagal Login Google:</p>
+                <p className="text-xs text-rose-600 mt-0.5 font-mono break-all">{authError}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setAuthError(null)}
+              className="text-xs font-bold text-rose-500 hover:text-rose-800 px-2 py-1 bg-white rounded-lg border border-rose-200"
+            >
+              Tutup
+            </button>
+          </div>
+        )}
         
         {/* Tab 1: Modul Ajar (RPP) */}
         {activeTab === 'modul' && (
