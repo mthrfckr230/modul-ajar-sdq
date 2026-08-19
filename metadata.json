@@ -1,0 +1,6 @@
+{
+  "name": "AI Modul Ajar Guru - Kurikulum Merdeka",
+  "description": "Penyusun Modul Ajar & RPP otomatis berbasis Kurikulum Merdeka dengan bank soal adaptif, penilaian siswa, analitik belajar, serta integrasi Google Drive dan Google Sheets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
